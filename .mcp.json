@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "schema-viewer": {
+      "command": "node",
+      "args": ["mcp-schema-server/index.js"],
+      "env": {
+        "SCHEMA_PATH": "C:/Users/sean/Downloads/ClaudeCodeDayTwo_TinderforAIs/prisma/schema.prisma"
+      }
+    }
+  }
+}

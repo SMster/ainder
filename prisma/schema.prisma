@@ -1,0 +1,90 @@
+// Prisma schema for "Tinder for AIs"
+// Local dev uses SQLite. To migrate to Supabase, switch provider to "postgresql"
+// and set DATABASE_URL / DIRECT_URL. See CLAUDE.md for the migration steps.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A user of the app. `id` stores the Supabase auth UUID (auth.users.id),
+// NOT a generated cuid, so local app data lines up with Supabase Auth identity.
+model User {
+  id          String           @id
+  email       String           @unique
+  name        String?
+  createdAt   DateTime         @default(now())
+  swipes      Swipe[]
+  preferences UserPreference[] // phase 2
+}
+
+// A swipeable card representing an LLM / AI model.
+model AIModel {
+  id            String           @id @default(cuid())
+  name          String
+  provider      String
+  tagline       String?
+  description   String?
+  imageUrl      String?
+  contextWindow Int?
+  pricing       String?
+  createdAt     DateTime         @default(now())
+  features      AIModelFeature[]
+  swipes        Swipe[]
+}
+
+// A capability tag, e.g. "vision", "function-calling", "coding".
+model Feature {
+  id       String           @id @default(cuid())
+  name     String           @unique
+  category String?
+  models   AIModelFeature[]
+  prefs    UserPreference[] // phase 2
+}
+
+// Join table: which features an AIModel has.
+model AIModelFeature {
+  aiModelId String
+  featureId String
+  aiModel   AIModel @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([aiModelId, featureId])
+}
+
+enum SwipeDirection {
+  LEFT
+  RIGHT
+}
+
+// A user's decision on an AIModel. Single source of truth:
+//   Matches   = direction == RIGHT
+//   Dismissed = direction == LEFT (excluded from deck forever)
+//   Deck      = AIModels with no Swipe row for the user
+model Swipe {
+  id        String         @id @default(cuid())
+  userId    String
+  aiModelId String
+  direction SwipeDirection
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiModel   AIModel        @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, aiModelId]) // one decision per model per user
+}
+
+// Phase 2: user-declared feature preferences for match highlighting/scoring.
+model UserPreference {
+  id        String  @id @default(cuid())
+  userId    String
+  featureId String
+  weight    Int     @default(1)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId])
+}
