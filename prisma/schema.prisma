@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (PgBouncer) — app runtime
+  directUrl = env("DIRECT_URL") // direct connection — migrations
 }
 
 // A user of the app. `id` stores the Supabase auth UUID (auth.users.id),

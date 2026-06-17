@@ -1,31 +1,34 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
-// ---------------------------------------------------------------------------
-// DEV AUTH SHIM
-//
-// This is a placeholder for Supabase Auth. The whole app reads the current user
-// through getCurrentUser(), so swapping in real auth later means implementing
-// ONLY this module (read the Supabase session, upsert a User keyed by the
-// auth UUID) and adding a login UI — no changes to pages, actions, or queries.
-//
-// Per the design, User.id stores the Supabase auth.users.id (a UUID). Here we
-// stand in with a single fixed dev user.
-// ---------------------------------------------------------------------------
+export type CurrentUser = { id: string; email: string; name: string | null };
 
-export const DEV_USER = {
-  id: "dev-user-0001",
-  email: "dev@local.test",
-  name: "Dev User",
-};
+// The Supabase auth user, or null if not signed in. Use in places that must
+// render for both signed-in and signed-out visitors (e.g. <Nav>, /login).
+export async function getOptionalUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+}
 
-export type CurrentUser = typeof DEV_USER;
-
+// The current app user. Redirects to /login if not authenticated, and upserts a
+// User row keyed by the Supabase auth UUID (User.id == auth.users.id) so app
+// data lines up with Supabase Auth identity. Pages and actions call this.
 export async function getCurrentUser(): Promise<CurrentUser> {
-  // Ensure the dev user exists so swipes have a valid FK target.
-  await prisma.user.upsert({
-    where: { id: DEV_USER.id },
-    update: {},
-    create: DEV_USER,
+  const authUser = await getOptionalUser();
+  if (!authUser) redirect("/login");
+
+  const email = authUser.email ?? "";
+  const name = (authUser.user_metadata?.name as string | undefined) ?? null;
+
+  const dbUser = await prisma.user.upsert({
+    where: { id: authUser.id },
+    update: { email },
+    create: { id: authUser.id, email, name },
   });
-  return DEV_USER;
+
+  return { id: dbUser.id, email: dbUser.email, name: dbUser.name };
 }

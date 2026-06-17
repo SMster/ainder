@@ -17,9 +17,8 @@ judging them by their feature sets instead of by people.
 | -------------- | ------------------------------------------------------------------- |
 | Framework      | Next.js (App Router) + TypeScript                                   |
 | ORM            | Prisma                                                              |
-| DB (local)     | SQLite (`prisma/dev.db`)                                            |
-| DB (prod)      | Supabase (Postgres) — app data migrated later                       |
-| Auth           | Supabase Auth (multi-user identity from day one)                    |
+| Database       | Supabase (Postgres) — **live**; was SQLite locally during early dev |
+| Auth           | Supabase Auth (email/password) via `@supabase/ssr` — **live**       |
 | Styling        | Tailwind CSS                                                        |
 | Swipe UI       | Framer Motion (or `react-tinder-card`)                              |
 | API            | Next.js Server Actions + Route Handlers (`app/api/...`)             |
@@ -34,11 +33,12 @@ etc.) live in **local SQLite during development** and migrate to Supabase Postgr
 To keep the two aligned, **`User.id` stores the Supabase auth UUID** (`auth.users.id`) rather
 than a generated cuid. On sign-in, upsert a `User` row keyed by that UUID.
 
-**Current state:** auth is a **dev shim** in `lib/auth.ts` — `getCurrentUser()` returns a single
-fixed dev user and upserts it. The entire app reads identity through this one function, so
-swapping in Supabase Auth means implementing only `lib/auth.ts` (read the Supabase session,
-upsert a `User` keyed by the auth UUID) and adding login UI — no changes to pages, actions, or
-queries.
+**Current state:** **Supabase Auth is live.** `lib/auth.ts` reads the Supabase session via
+`@supabase/ssr` and upserts a `User` keyed by the auth UUID; `getCurrentUser()` redirects to
+`/login` when signed out. Auth uses email/password (`lib/auth-actions.ts`, `app/login`), with
+`middleware.ts` refreshing the session each request. Supabase clients live in `lib/supabase/`.
+The whole app still reads identity through `getCurrentUser()`, so pages/actions/queries were
+unchanged when the shim was replaced — exactly as designed.
 
 ## Database models
 
@@ -89,8 +89,10 @@ prisma/
 ```
 
 ### Running locally
-Node lives at `C:\Program Files\nodejs` (on PATH for new shells). From the project root:
-`npm run dev` → http://localhost:3000. The deck and matches read from `prisma/dev.db`.
+Node lives at `C:\Program Files\nodejs` (on PATH for new shells). Copy `.env.example` to
+`.env` and fill in the Supabase values (DB pooled/direct URLs, project URL, anon key). Then
+`npm run dev` → http://localhost:3000. The deck and matches read from Supabase Postgres, and
+you must sign in (or create an account) at `/login` first.
 
 ## Common commands
 
@@ -103,7 +105,9 @@ npx prisma studio                 # browse the DB in a GUI
 npx prisma validate               # validate the schema
 ```
 
-## Migrating to Supabase (later)
+## Migrating to Supabase (done — kept as a record)
+
+This migration has been completed; the steps below are how it was done.
 
 1. Create a Supabase project; copy the Postgres connection strings.
 2. In `prisma/schema.prisma`, change `datasource db { provider = "sqlite" }` to `"postgresql"`.
