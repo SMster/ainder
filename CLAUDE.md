@@ -150,6 +150,14 @@ no database, network, or React rendering — so they run fast and need no env va
 testable, prefer extracting pure helpers into `lib/` (e.g. `lib/format.ts`, `sortDeckByPreference`
 in `lib/data.ts`) rather than inlining them in components/pages.
 
+### CI / required check (tests gate merges)
+`.github/workflows/ci.yml` runs `npm test` on every PR to `main` (and on pushes to `main`) as a
+job named **`test`**. A **repository ruleset** ("Require tests on main") makes that `test` check
+**required**: a PR cannot merge into `main` until the tests pass, and `strict` is on so the PR
+branch must also be up to date with `main` first. The repo is **public** — required status checks
+via rulesets need GitHub Pro on private repos, so making it public was the free way to enforce
+this gate. CI needs no secrets (`npm ci` runs `prisma generate`, which is schema-only).
+
 > Do **not** run `next build` while the dev server is running — it overwrites `.next` and the
 > running dev server then serves unstyled pages. Stop the server (and `rm -rf .next`) to recover.
 
