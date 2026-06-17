@@ -1,0 +1,27 @@
+name: CI
+
+# Run the unit tests on every PR targeting main (and on pushes to main itself,
+# so the default branch always has a recorded result).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # `npm ci` runs the `postinstall: prisma generate` hook. That only reads
+      # prisma/schema.prisma and needs no database connection, so no env vars
+      # or secrets are required here.
+      - run: npm ci
+
+      - run: npm test
