@@ -133,7 +133,22 @@ npx prisma migrate dev            # create/apply a migration (against Supabase v
 npx prisma db seed                # seed the database
 npx prisma studio                 # browse the DB in a GUI
 npx prisma validate               # validate the schema
+npm test                          # run unit tests once (Vitest)
+npm run test:watch                # run unit tests in watch mode
 ```
+
+## Testing
+
+Unit tests use **Vitest** and live in `tests/`. They cover the pure, DB-free logic only —
+no database, network, or React rendering — so they run fast and need no env vars:
+
+- `tests/data.test.ts` — `matchScore` (preference scoring) and `sortDeckByPreference`
+  (best-match-first deck ordering).
+- `tests/format.test.ts` — `formatContext` (token-count display helper).
+
+`vitest.config.ts` mirrors the `@/*` → `./*` path alias from `tsconfig.json`. To keep logic
+testable, prefer extracting pure helpers into `lib/` (e.g. `lib/format.ts`, `sortDeckByPreference`
+in `lib/data.ts`) rather than inlining them in components/pages.
 
 > Do **not** run `next build` while the dev server is running — it overwrites `.next` and the
 > running dev server then serves unstyled pages. Stop the server (and `rm -rf .next`) to recover.

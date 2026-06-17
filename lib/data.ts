@@ -94,3 +94,18 @@ export function matchScore(
   const matched = modelFeatures.filter((f) => want.has(f)).length;
   return { matched, total: preferred.length };
 }
+
+// Order a deck best-match-first for the given preferred features. Returns a new
+// array (does not mutate the input). With no preferences the original order is
+// preserved (a stable sort over an all-equal key).
+export function sortDeckByPreference<T extends { features: string[] }>(
+  deck: T[],
+  preferred: string[]
+): T[] {
+  if (preferred.length === 0) return [...deck];
+  return [...deck].sort(
+    (a, b) =>
+      matchScore(b.features, preferred).matched -
+      matchScore(a.features, preferred).matched
+  );
+}
