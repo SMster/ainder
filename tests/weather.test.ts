@@ -4,6 +4,7 @@ import {
   weatherCodeInfo,
   formatTemp,
   CITIES,
+  DEFAULT_CITY,
 } from "@/lib/weather";
 
 describe("weatherCodeInfo", () => {
@@ -72,5 +73,18 @@ describe("CITIES", () => {
       "Sydney",
       "Dubai",
     ]);
+  });
+});
+
+describe("DEFAULT_CITY", () => {
+  // The geolocation-denied fallback must stay New York. DEFAULT_CITY is defined
+  // as CITIES[0], so reordering CITIES would silently change the fallback —
+  // these assertions guard against that.
+  it("is New York", () => {
+    expect(DEFAULT_CITY.name).toBe("New York");
+  });
+
+  it("is the first city in CITIES", () => {
+    expect(DEFAULT_CITY).toBe(CITIES[0]);
   });
 });
