@@ -1,4 +1,5 @@
 import { signIn, signUp } from "@/lib/auth-actions";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,16 @@ export default async function LoginPage({
         Sign in to start swiping on AI models.
       </p>
 
-      <form className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-6">
+        <GoogleSignInButton />
+
+        <div className="my-4 flex items-center gap-3 text-xs text-slate-500">
+          <span className="h-px flex-1 bg-white/10" />
+          or use email
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <form className="flex flex-col gap-3">
         <label className="text-sm text-slate-300">
           Email
           <input
@@ -69,7 +79,8 @@ export default async function LoginPage({
             Create account
           </button>
         </div>
-      </form>
+        </form>
+      </div>
     </main>
   );
 }
