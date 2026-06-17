@@ -23,6 +23,7 @@ judging them by their feature sets instead of by people.
 | Styling   | Tailwind CSS v4                                                        |
 | Swipe UI  | Framer Motion                                                          |
 | API       | Next.js Server Actions + Route Handlers (`app/auth/callback`)          |
+| Hosting   | Vercel (GitHub integration; auto-deploys on push to `main`) — **live** |
 
 ### Why Prisma
 Prisma abstracts the database, so the same schema and queries ran on SQLite locally during
@@ -153,6 +154,26 @@ Tools: `show_schema` (opens the diagram), `get_schema_dbml`, `get_schema_json`. 
 6. Enabled Google OAuth: created a Google Cloud OAuth client (redirect URI =
    `https://<ref>.supabase.co/auth/v1/callback`), pasted Client ID/Secret into Supabase, and
    allow-listed `http://localhost:3000/**` under Auth → URL Configuration.
+
+## Deployment (Vercel)
+
+Live at **https://ainder-seven.vercel.app**, deployed via Vercel's GitHub integration — every
+push to `main` triggers a production build.
+
+- **Build:** `npm install` runs `postinstall: prisma generate` (Vercel caches `node_modules`, so
+  the Prisma client is regenerated each build) → then `next build`. No `vercel.json` needed.
+- **Vercel env vars** (Settings → Environment Variables, Production): `DATABASE_URL` (pooled
+  6543), `DIRECT_URL` (5432), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. The
+  `NEXT_PUBLIC_*` values are inlined at build time, so they must exist before the first build.
+- **Migrations do NOT run on Vercel.** Apply schema changes locally with `npx prisma migrate dev`
+  (uses `DIRECT_URL`), then push.
+- **Production auth redirect config (required, easy to miss):** Supabase → Authentication → URL
+  Configuration must include the prod domain — **Site URL** `https://ainder-seven.vercel.app`
+  and **Redirect URLs** `https://ainder-seven.vercel.app/**` (keep `http://localhost:3000/**` for
+  local dev). The Google Cloud OAuth client's Authorized JS origins must include the prod domain;
+  its redirect URI stays the Supabase callback. **Symptom of missing this:** Google OAuth bounces
+  to `localhost` or errors with `flow_state_already_used` — the Site URL / Redirect URLs are
+  missing the current domain.
 
 ## Conventions
 
