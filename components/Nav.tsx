@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getOptionalUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth-actions";
+import WeatherWidget from "@/components/WeatherWidget";
 
 export default async function Nav() {
   const user = await getOptionalUser();
@@ -54,6 +55,9 @@ export default async function Nav() {
               Sign in
             </Link>
           )}
+          <div className="ml-1">
+            <WeatherWidget />
+          </div>
         </div>
       </nav>
     </header>
