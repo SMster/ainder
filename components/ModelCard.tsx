@@ -1,4 +1,5 @@
 import type { ModelCardData } from "@/lib/data";
+import { formatContext } from "@/lib/format";
 
 const PROVIDER_GRADIENT: Record<string, string> = {
   Anthropic: "from-orange-500 to-amber-600",
@@ -6,13 +7,6 @@ const PROVIDER_GRADIENT: Record<string, string> = {
   Google: "from-blue-500 to-indigo-600",
   Meta: "from-sky-500 to-blue-700",
 };
-
-function formatContext(tokens: number | null): string | null {
-  if (!tokens) return null;
-  if (tokens >= 1_000_000) return (tokens / 1_000_000).toString() + "M tokens";
-  if (tokens >= 1_000) return Math.round(tokens / 1000) + "K tokens";
-  return tokens + " tokens";
-}
 
 export default function ModelCard({
   model,

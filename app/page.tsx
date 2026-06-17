@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { getDeck, getPreferredFeatures, matchScore } from "@/lib/data";
+import { getDeck, getPreferredFeatures, sortDeckByPreference } from "@/lib/data";
 import SwipeDeck from "@/components/SwipeDeck";
 
 export const dynamic = "force-dynamic";
@@ -14,17 +14,11 @@ export default async function DiscoverPage() {
   const preferred = preferredFeatures.map((f) => f.name);
 
   // With preferences set, surface the best matches first.
-  if (preferred.length > 0) {
-    deck.sort(
-      (a, b) =>
-        matchScore(b.features, preferred).matched -
-        matchScore(a.features, preferred).matched
-    );
-  }
+  const sortedDeck = sortDeckByPreference(deck, preferred);
 
   // Key the deck by its contents so a reset (which refetches) remounts it,
   // while ordinary optimistic swipes leave it mounted.
-  const deckKey = deck.map((m) => m.id).join("|") || "empty";
+  const deckKey = sortedDeck.map((m) => m.id).join("|") || "empty";
 
   return (
     <main>
@@ -38,7 +32,7 @@ export default async function DiscoverPage() {
           <>Set your <Link href="/preferences" className="text-pink-300 underline">preferences</Link> to highlight matching features</>
         )}
       </p>
-      <SwipeDeck key={deckKey} initialModels={deck} preferred={preferred} />
+      <SwipeDeck key={deckKey} initialModels={sortedDeck} preferred={preferred} />
     </main>
   );
 }
